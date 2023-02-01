@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from re import search
+from sys import exit
 from time import sleep
 
 from selenium import webdriver
@@ -70,9 +71,16 @@ class InstagramScraper():
 
     def login(self) -> None:
         sleep(2)
-        self.driver.find_element(By.XPATH, 
-            self.get_XPath['cookies_button']).click()
 
+        try:
+            self.driver.find_element(By.XPATH, 
+                self.get_XPath['cookies_button']).click()
+
+        except NoSuchElementException:
+            pass
+        
+
+        sleep(2)
         self.driver.find_element(By.XPATH, 
         '//input[@name="username"]').send_keys(self.username)
         self.driver.find_element(By.XPATH, 
@@ -85,8 +93,18 @@ class InstagramScraper():
 
     def go_to_profile(self) -> None:
         sleep(10)
-        self.driver.find_element(By.XPATH, 
-            self.get_XPath['profile_button']).click()
+
+        try:
+            self.driver.find_element(By.XPATH, 
+                self.get_XPath['profile_button']).click()
+
+        except NoSuchElementException:
+            print(('Credenciales incorrectos o problemas de inicio '
+                    'de sesión con su cuenta. Por favor, pruebe '
+                    'otra vez o contacte con el creador del script'))
+
+            self.close_nav()
+            exit()
 
     
     def get_follow(self, f: str) -> set:
@@ -131,7 +149,9 @@ class InstagramScraper():
         all_a = self.driver.find_elements(By.TAG_NAME, 'a')
 
         for a in all_a:
-            f_list.add(a.text)
+            if user := a.text not in ('Verificado', 'Verified'):
+                f_list.add(user)
+
 
         sleep(1)
         self.driver.back()
